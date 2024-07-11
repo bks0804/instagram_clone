@@ -83,4 +83,46 @@ router.post("/signin", (req, res) => {
   });
 });
 
+router.post("/googleLogin", (req, res) => {
+  const { email_verified, email, name, clientId, username, Photo } = req.body;
+
+  // if (!username || typeof username !== "string") {
+  //   return res
+  //     .status(400)
+  //     .json({ error: "Username is required and must be a string" });
+  // }
+
+  if (email_verified) {
+    USER.findOne({ email: email }).then((savedUser) => {
+      if (savedUser) {
+        const token = jwt.sign({ _id: savedUser.id }, jwtSecret);
+        const { _id, name, email, username } = savedUser;
+        res.status(200).send({ token, user: { _id, name, email, username } });
+      } else {
+        const password = email + clientId;
+        const user = new USER({
+          name,
+          username,
+          email,
+          password: password,
+          Photo,
+        });
+
+        user
+          .save()
+          .then((user) => {
+            let userId = user._id.toString();
+            const token = jwt.sign({ _id: userId }, jwtSecret);
+            const { _id, name, email, username } = user;
+            res
+              .status(200)
+              .send({ token, user: { _id, name, email, username } });
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+    });
+  }
+});
 module.exports = router;

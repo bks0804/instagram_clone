@@ -6,9 +6,15 @@ const POST = mongoose.model("POST");
 
 // Route
 router.get("/allposts", requireLogin, (req, res) => {
+  let limit = req.query.limit;
+  let skip = req.query.skip;
+
   POST.find()
     .populate("postedBy", "_id name photo")
     .populate("comments.postedBy", "_id name")
+    .limit(parseInt(limit))
+    .skip(parseInt(skip))
+
     .sort("-createdAt")
     .then((posts) => {
       res.status(200).json(posts);
